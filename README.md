@@ -6,6 +6,7 @@ It includes:
 - **Cleaned Dataset** (`Cleaned_Flipkart_Mobiles.xlsx`)
 - **Power BI Dashboard** (`Flipkart_Assessment_Dashboard.pbix`)
 - **Insights Document** (`Flipkart_Assessment_Q&A.docx`)
+- **Python Data Cleaning Script**
 
 The analysis covers market segmentation, brand performance, and key product specifications, providing data-driven insights into consumer trends.
 
@@ -17,6 +18,7 @@ The analysis covers market segmentation, brand performance, and key product spec
 | `Cleaned_Flipkart_Mobiles.xlsx` | Cleaned dataset used for analysis |
 | `Flipkart_Assessment_Dashboard.pbix` | Interactive Power BI dashboard |
 | `Flipkart_Assessment_Q&A.docx` | Written insights & answers to assessment questions |
+| `flipkart_cleaning.py` | Python script used for cleaning the raw dataset |
 
 ---
 
@@ -55,34 +57,55 @@ The **Power BI Dashboard** allows:
 
 ## 🛠 Tools & Technologies
 - **Excel** → Data cleaning & preparation  
+- **Python (Pandas, NumPy)** → Data preprocessing  
 - **Power BI** → Dashboard creation  
-- **Python (Pandas, NumPy)** → Data preprocessing (if applicable)  
 - **Tableau** → Comparative visualizations (optional)  
 
 ---
 
-## 👩‍💻 About the Author
+## 🧹 Data Cleaning Process (Python)
+Before creating the Power BI dashboard, I cleaned the raw dataset using **Python** and **pandas**.  
+The steps included:
+1. Removing rows with missing values in `Memory` or `Storage`.
+2. Extracting numerical values from text-based RAM/Storage columns.
+3. Categorizing mobiles into **Low**, **Mid**, and **Premium** price segments.
+4. Exporting the cleaned dataset for Power BI analysis.
 
-**Shivadharshini C** – *Data Analyst*  
-📍 Coimbatore, India | 🌎 Open to opportunities in Dubai, Canada, UK  
+```python
+import pandas as pd
 
-**Summary:**  
-Data Analyst with 2+ years of experience transforming raw data into actionable business insights.  
-Proficient in SQL, Power BI, Python (Pandas, NumPy), and Tableau, with a proven record of improving decision-making through compelling dashboards and deep-dive analysis. Skilled in data modeling, visualization, and statistical analysis.
+# Load the Excel file
+file_path = "C:\\Assessment\\Filpkart Mobiles.xlsx"  # Replace with your actual file path
+xls = pd.ExcelFile(file_path)
 
-**Core Skills:**  
-`SQL` · `Python` · `Power BI` · `Excel` · `Tableau` · `Data Modeling` · `Statistical Analysis` · `Google Analytics`  
+# Load data from the relevant sheet
+df = xls.parse('Flipkart_Mobiles')
 
-**Notable Achievements:**
-- Delivered actionable insights for luxury brand *Chanel*, boosting decision-making efficiency by 20%.
-- Improved sales by 15% and reduced marketing spend by 10% through strategic data analysis.
-- Integrated **OpenAI GPT models** into workflows, improving content generation efficiency.
+# Drop rows with missing Memory or Storage
+df_clean = df.dropna(subset=["Memory", "Storage"])
 
----
+# Convert Memory and Storage to numerical GB values
+df_clean["Memory_GB"] = df_clean["Memory"].str.extract(r"(\d+)").astype(float)
+df_clean["Storage_GB"] = df_clean["Storage"].str.extract(r"(\d+)").astype(float)
 
-## 📬 Contact
-📧 Email: [shivadharshinics@gmail.com](mailto:shivadharshinics@gmail.com)  
-🔗 LinkedIn: [linkedin.com/in/shiva-dharshini-238785205](https://www.linkedin.com/in/shiva-dharshini-238785205)  
+# Price segmentation
+def classify_price(price):
+    if price < 10000:
+        return "Low"
+    elif 10000 <= price < 20000:
+        return "Mid"
+    else:
+        return "Premium"
 
----
-.
+df_clean["Price Segment"] = df_clean["Selling Price"].apply(classify_price)
+
+# Save the cleaned dataset
+df_clean.to_excel("Cleaned_Flipkart_Mobiles.xlsx", index=False)
+
+# Summary Insights
+print("Total entries after cleaning:", len(df_clean))
+print("\nPrice Segment Distribution:\n", df_clean["Price Segment"].value_counts())
+print("\nTop 5 Brands by Count:\n", df_clean["Brand"].value_counts().head(5))
+print("\nBrands Covering All Segments:\n", df_clean.groupby("Brand")["Price Segment"].nunique().loc[lambda x: x == 3].index.tolist())
+print("\nMost Common Memory (GB):", df_clean["Memory_GB"].mode()[0])
+print("Most Common Storage (GB):", df_clean["Storage_GB"].mode()[0])
